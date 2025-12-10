@@ -10,7 +10,7 @@ config = {
     # Model
     'model_type': 'dim',  # 'unet', 'dit', 'dim'
     'model_params': {
-        'img_size': (32, 32),
+        'img_size': (96, 96),
         'patch_size': 2,
         'in_channels': 3,
         'hidden_size': 384,
@@ -23,9 +23,9 @@ config = {
     # Dataset
     'dataset': 'custom',  # 'cifar10', 'cifar100', 'mnist', 'fashionmnist', 'celeba', 'custom'
     'data_root': '/data3/wangchangmiao/shenxy/PublicDataset/oxfordFlowers/prepare_pic/test',
-    'image_size': (32, 32),
-    'conditional': False,  # Whether to use labels
-    'num_classes': 10,
+    'image_size': (96, 96),
+    'conditional': True,  # Whether to use labels
+    'num_classes': 102,
     'use_subdirs': True,  # For custom dataset
     'label_file': None,    # For custom dataset
     
@@ -43,8 +43,8 @@ config = {
     'ddim_eta': 0.0,
     
     # Training
-    'epochs': 300,
-    'batch_size': 128,
+    'epochs': 1500,
+    'batch_size': 8,
     'num_workers': 4,
     'learning_rate': 1e-4,
     'weight_decay': 0.0,
@@ -63,8 +63,8 @@ config = {
     
     # Sampling
     'sample_dir': './generated_images',
-    'sample_interval': 5,
-    'sample_start_epoch': 30,
+    'sample_interval': 10,
+    'sample_start_epoch': 200,
     'num_samples': 16,
     
     # Monitoring
