@@ -10,10 +10,91 @@
 
 **一个全面、工程化、基于 PyTorch 的现代扩散模型实现库。**
 
-[English](README_EN.md) | [中文](README.md)
-
 </div>
 
+
+
+
+
+
+
+
+
+✨ Diffusion Models Collection
+
+A Comprehensive PyTroch Diffusion Library.
+
+一个全面、工程化、基于 PyTorch 的现代扩散模型实现库。
+
+
+
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=240&text=✨%20Diffusion%20Models%20Collection&fontSize=40&fontAlign=50&fontColor=28F2E6&color=0:9AD6FF,50:C1A6FF,100:CFF7E6&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=20&descColor=C8EFF0&animation=twinkling"/>
+</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=240&text=✨%20Diffusion%20Models%20Collection&fontSize=40&fontAlign=50&fontColor=FFD700&color=0:7000FF,50:FF006E,100:FF9F1C&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=20&descColor=FFD6FF&animation=twinkling"/>
+</p>
+
+
+
+
+
+
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=240&text=✨%20Diffusion%20Models%20Collection&fontSize=40&fontAlign=50&fontColor=E3FFF8&color=0:FF7F50,50:FF69B4,100:9932CC&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=20&descColor=DDA0DD&animation=twinkling"/>
+</p>
+
+
+
+
+
+
+
+
+
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&height=250&text=✨%20Diffusion%20Models%20Collection&fontSize=42&fontAlign=50&fontColor=5F1BFA&color=0:DCC6F0,50:FFD7E6,100:FFCDA5&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=21&descColor=8F3D17&animation=twinkling"/>
+</p>
+
+
+
+
+
+
+<div align="center">
+    <!-- 渐变色谱：从橙色到紫色 -->
+    <img src="https://img.shields.io/badge/Framework-PyTorch-FF9A8B?style=for-the-badge&logo=pytorch&logoColor=white" alt="Framework">
+    <img src="https://img.shields.io/badge/Models-DDPM%20%7C%20DDIM-FF8288?style=for-the-badge&logoColor=white" alt="Models">
+    <img src="https://img.shields.io/badge/Backbones-UNet%20%7C%20DiT-E06A9C?style=for-the-badge&logoColor=white" alt="Backbones">
+    <img src="https://img.shields.io/badge/License-MIT-B552A3?style=for-the-badge&logoColor=white" alt="License">
+    <img src="https://img.shields.io/badge/Python-3.8%2B-8E44AD?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+[English](README_EN.md) | [中文](README.md)
 ---
 
 ## 📖 简介
@@ -232,8 +313,9 @@ data/
 ```
 
 **方式 2: 扁平文件夹 + JSON 标签**
+labels.json 文件内容示例：
 ```json
-// labels.json
+
 {
   "img1.jpg": 0,
   "img2.jpg": 1
@@ -275,6 +357,9 @@ config = {
 ✅ 现在就克隆项目，开启你的扩散模型之旅吧！
 
 ---
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=rect&color=9580FF&text=✨%20Enjoy%20Building%20Your%20Model!%20✨&fontColor=FFC0FA&fontSize=25&height=80"/>
-</p>
+
+
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:A875FF,100:6FFBFF&height=240&section=header&text=✨%20Enjoy%20Building%20Your%20Model!%20✨&fontSize=44&animation=twinkling&fontAlignY=48&fontColor=3A1BFC" width="100%" alt="Header Banner" />
+</div>
+

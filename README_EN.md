@@ -232,8 +232,8 @@ data/
 ```
 
 **Option 2: Flat Folder + JSON Labels**
+labels.json example content:
 ```json
-// labels.json
 {
   "img1.jpg": 0,
   "img2.jpg": 1
