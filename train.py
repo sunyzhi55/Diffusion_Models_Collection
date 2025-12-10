@@ -2,7 +2,7 @@
 Main training script for diffusion models
 Supports single GPU and multi-GPU training
 """
-
+import time
 import os
 import sys
 import argparse
@@ -304,4 +304,13 @@ def main():
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     main()
+    end_time = time.time()
+    total_seconds = end_time - start_time
+    # 计算小时、分钟和秒
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    # 打印总训练时间
+    print(f"Total training time: {hours}h {minutes}m {seconds}s")

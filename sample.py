@@ -1,7 +1,7 @@
 """
 Sampling/Inference script for trained diffusion models
 """
-
+import time
 import sys
 import argparse
 from pathlib import Path
@@ -183,4 +183,13 @@ def main():
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     main()
+    end_time = time.time()
+    total_seconds = end_time - start_time
+    # 计算小时、分钟和秒
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    # 打印总训练时间
+    print(f"Total sampling time: {hours}h {minutes}m {seconds}s")

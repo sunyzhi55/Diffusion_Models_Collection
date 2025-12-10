@@ -1,7 +1,7 @@
 """
 Evaluation script for computing metrics (FID, IS, LPIPS)
 """
-
+import time
 import sys
 import argparse
 from pathlib import Path
@@ -145,7 +145,7 @@ def main():
     # Load real images
     print("Loading real images...")
     dataset = get_dataset(config, train=False)
-    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=4)
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     
     real_images = []
     for i, batch in enumerate(tqdm(dataloader, desc='Loading real images')):
@@ -190,30 +190,44 @@ def main():
     # Optionally save all images as PNGs in a single root folder
     if args.save_images_dir:
         save_root = Path(args.save_images_dir)
-        # real_dir = save_root / 'real'
-        # gen_dir = save_root / 'generate'
-        save_root.mkdir(parents=True, exist_ok=True)
-        # gen_dir.mkdir(parents=True, exist_ok=True)
+        real_dir = save_root / 'real'
+        gen_dir = save_root / 'generate'
+        real_dir.mkdir(parents=True, exist_ok=True)
+        gen_dir.mkdir(parents=True, exist_ok=True)
 
         num_digits = len(str(max(len(real_images), len(fake_images), 1)))
 
         for idx, img in enumerate(tqdm(real_images, desc='Saving real images')):
-            save_image(img, save_root / f"real_{idx + 1:0{num_digits}d}.png")
+            save_image(img, real_dir / f"real_{idx + 1:0{num_digits}d}.png")
 
         for idx, img in enumerate(tqdm(fake_images, desc='Saving generated images')):
-            save_image(img, save_root / f"generate_{idx + 1:0{num_digits}d}.png")
+            save_image(img, gen_dir / f"generate_{idx + 1:0{num_digits}d}.png")
 
-        if len(real_images) > 0:
-            grid_real = real_images[:64]
-            nrow_real = max(1, int(len(grid_real) ** 0.5))
-            save_image(grid_real, save_root / 'real_grid.png', nrow=nrow_real)
+        # Save all images as grid PNGs in batches (default 64 per grid)
+        def _save_grids(tensor_imgs, prefix, out_dir):
+            grid_size = 64
+            total = len(tensor_imgs)
+            if total == 0:
+                return
+            # ensure tensor is on CPU
+            imgs = tensor_imgs.cpu()
+            num_digits_grid = len(str((total + grid_size - 1) // grid_size))
+            for i in range(0, total, grid_size):
+                chunk = imgs[i:i + grid_size]
+                # compute nrow for a near-square grid (prefer 8 for 64)
+                n = len(chunk)
+                nrow = min(8, max(1, int(n ** 0.5)))
+                grid_idx = i // grid_size + 1
+                out_name = f"{prefix}_grid_{grid_idx:0{num_digits_grid}d}.png"
+                save_image(chunk, out_dir / out_name, nrow=nrow)
 
-        if len(fake_images) > 0:
-            grid_fake = fake_images[:64]
-            nrow_fake = max(1, int(len(grid_fake) ** 0.5))
-            save_image(grid_fake, save_root / 'generate_grid.png', nrow=nrow_fake)
+        # Save real images grids
+        _save_grids(real_images, 'real', save_root)
+        # Save generated images grids
+        _save_grids(fake_images, 'generate', save_root)
 
-        print(f"Saved real images and generated images to {save_root}")
+        print(f"Saved real images to {real_dir} and generated images to {gen_dir}")
+        print(f"Also saved image grids in {save_root}")
     
     # Compute metrics
     print("\n" + "="*50)
@@ -249,4 +263,13 @@ def main():
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     main()
+    end_time = time.time()
+    total_seconds = end_time - start_time
+    # 计算小时、分钟和秒
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    # 打印总训练时间
+    print(f"Total training time: {hours}h {minutes}m {seconds}s")
