@@ -1,97 +1,71 @@
-<div align="center">
+---
+date: 2025-12-10T19:48:00
+tags:
+  - diffusion-models
+  - ddpm
+  - ddim
+  - pytorch
+  - generative-models
+  - deep-learning
+---
 
-# ✨ Diffusion Models Collection
+
+<div>
+  <div align="center">
+    <img src="https://capsule-render.vercel.app/api?type=waving&height=240&text=✨%20Diffusion%20Models%20Collection&fontSize=40&fontAlign=50&fontColor=28F2E6&color=0:9AD6FF,50:C1A6FF,100:CFF7E6&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=20&descColor=C8EFF0&animation=twinkling"/>
+  </div>
+
+
+
+  <div align="center">
+    <img src="https://capsule-render.vercel.app/api?type=waving&height=240&text=✨%20Diffusion%20Models%20Collection&fontSize=40&fontAlign=50&fontColor=FFD700&color=0:7000FF,50:FF006E,100:FF9F1C&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=20&descColor=FFD6FF&animation=twinkling"/>
+  </div>
+
+
+
+
+  <div align="center">
+    <img src="https://capsule-render.vercel.app/api?type=waving&height=240&text=✨%20Diffusion%20Models%20Collection&fontSize=40&fontAlign=50&fontColor=E3FFF8&color=0:FF7F50,50:FF69B4,100:9932CC&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=20&descColor=DDA0DD&animation=twinkling"/>
+  </div>
+
+
+
+
+  <div align="center">
+    <img src="https://capsule-render.vercel.app/api?type=waving&height=250&text=✨%20Diffusion%20Models%20Collection&fontSize=42&fontAlign=50&fontColor=5F1BFA&color=0:DCC6F0,50:FFD7E6,100:FFCDA5&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=21&descColor=8F3D17&animation=twinkling"/>
+  </div>
+
+  <div align="center">
+      <!-- 渐变色谱：从橙色到紫色 -->
+      <img src="https://img.shields.io/badge/Framework-PyTorch-FF9A8B?style=for-the-badge&logo=pytorch&logoColor=white" alt="Framework">
+      <img src="https://img.shields.io/badge/Models-DDPM%20%7C%20DDIM-FF8288?style=for-the-badge&logoColor=white" alt="Models">
+      <img src="https://img.shields.io/badge/Backbones-UNet%20%7C%20DiT-E06A9C?style=for-the-badge&logoColor=white" alt="Backbones">
+      <img src="https://img.shields.io/badge/License-MIT-B552A3?style=for-the-badge&logoColor=white" alt="License">
+      <img src="https://img.shields.io/badge/Python-3.8%2B-8E44AD?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  </div>
 
 [![PyTorch](https://img.shields.io/badge/Framework-PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![Models](https://img.shields.io/badge/Models-DDPM%20%7C%20DDIM-7F78D2?style=flat)](https://arxiv.org/abs/2006.11239)
 [![Backbones](https://img.shields.io/badge/Backbones-UNet%20%7C%20DiT%20%7C%20DiM-6CC7F6?style=flat)](https://github.com/facebookresearch/DiT)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+</div>
+
+
+---
+
+<div align="center">
+
+# ✨ Diffusion Models Collection
 
 **一个全面、工程化、基于 PyTorch 的现代扩散模型实现库。**
 
+支持 DDPM、DDIM、CFG 等多种扩散算法，集成 UNet、DiT、DiM 等先进主干网络。  
+提供分布式训练、EMA、实验追踪、完整评估指标，开箱即用。
+
+[简介](#-简介) • [项目结构](#-项目结构) • [安装指南](#️-安装指南) • [快速开始](#-快速开始) • [许可证](#-许可证)
+
 </div>
-
-
-
-
-
-
-
-
-
-✨ Diffusion Models Collection
-
-A Comprehensive PyTroch Diffusion Library.
-
-一个全面、工程化、基于 PyTorch 的现代扩散模型实现库。
-
-
-
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&height=240&text=✨%20Diffusion%20Models%20Collection&fontSize=40&fontAlign=50&fontColor=28F2E6&color=0:9AD6FF,50:C1A6FF,100:CFF7E6&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=20&descColor=C8EFF0&animation=twinkling"/>
-</p>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&height=240&text=✨%20Diffusion%20Models%20Collection&fontSize=40&fontAlign=50&fontColor=FFD700&color=0:7000FF,50:FF006E,100:FF9F1C&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=20&descColor=FFD6FF&animation=twinkling"/>
-</p>
-
-
-
-
-
-
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&height=240&text=✨%20Diffusion%20Models%20Collection&fontSize=40&fontAlign=50&fontColor=E3FFF8&color=0:FF7F50,50:FF69B4,100:9932CC&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=20&descColor=DDA0DD&animation=twinkling"/>
-</p>
-
-
-
-
-
-
-
-
-
-<p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&height=250&text=✨%20Diffusion%20Models%20Collection&fontSize=42&fontAlign=50&fontColor=5F1BFA&color=0:DCC6F0,50:FFD7E6,100:FFCDA5&desc=一个全面、工程化、基于%20PyTorch%20的现代扩散模型实现库&descAlign=50&descAlignY=78&descSize=21&descColor=8F3D17&animation=twinkling"/>
-</p>
-
-
-
-
-
-
-<div align="center">
-    <!-- 渐变色谱：从橙色到紫色 -->
-    <img src="https://img.shields.io/badge/Framework-PyTorch-FF9A8B?style=for-the-badge&logo=pytorch&logoColor=white" alt="Framework">
-    <img src="https://img.shields.io/badge/Models-DDPM%20%7C%20DDIM-FF8288?style=for-the-badge&logoColor=white" alt="Models">
-    <img src="https://img.shields.io/badge/Backbones-UNet%20%7C%20DiT-E06A9C?style=for-the-badge&logoColor=white" alt="Backbones">
-    <img src="https://img.shields.io/badge/License-MIT-B552A3?style=for-the-badge&logoColor=white" alt="License">
-    <img src="https://img.shields.io/badge/Python-3.8%2B-8E44AD?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-</div>
-
-
-
-
-
-
-
-
-
-
 
 
 [English](README_EN.md) | [中文](README.md)
