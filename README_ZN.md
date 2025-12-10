@@ -10,7 +10,7 @@
 
 **一个全面、工程化、基于 PyTorch 的现代扩散模型实现库。**
 
-[English](README_EN.md) | [中文](README.md)
+[English](README_EN.md) | [中文](README_ZN.md)
 
 </div>
 
