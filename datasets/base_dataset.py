@@ -97,6 +97,7 @@ class DiffusionDataset(Dataset):
     def get_default_transform(image_size=32, dataset_name='cifar10'):
         """Get default transform for a dataset"""
         dataset_name = dataset_name.lower()
+        # torchvision Resize/CenterCrop accept int or (h, w)
         
         if dataset_name in ['mnist', 'fashionmnist']:
             # Grayscale datasets

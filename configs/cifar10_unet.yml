@@ -2,7 +2,7 @@ project_name: diffusion-models
 experiment_name: cifar10-unet-ddpm
 model_type: unet
 model_params:
-  image_size: 32
+  image_size: 64
   in_channels: 3
   model_channels: 128
   out_channels: 3
@@ -13,10 +13,9 @@ model_params:
   use_attention: true
 dataset: cifar10
 data_root: "/data3/wangchangmiao/shenxy/PublicDataset/cifar10"
-image_size: 32
+image_size: 64
 conditional: true
 num_classes: 10
-diffusion_type: ddpm
 num_timesteps: 1000
 beta_start: 0.0001
 beta_end: 0.02
@@ -41,7 +40,13 @@ sample_dir: ./generated_images
 sample_interval: 5
 sample_start_epoch: 20
 num_samples: 16
-use_swanlab: true
+use_swanlab: false
 distributed: false
 world_size: 1
 seed: 42
+
+# GPU设置
+# 单卡：指定具体的GPU ID (如 0, 1, 2, 等)
+# 多卡：指定GPU ID列表 (如 [0, 1, 2, 3])
+# 注意：--gpus 命令行参数会覆盖此配置
+gpu_id: 0  # 单卡GPU ID，或多卡时为GPU列表

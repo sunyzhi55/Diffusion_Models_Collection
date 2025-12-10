@@ -5,6 +5,7 @@ Supports both conditional and unconditional generation
 
 import torch
 import torch.nn as nn
+from typing import Tuple, Optional
 import math
 
 
@@ -143,7 +144,7 @@ class UNet(nn.Module):
     """
     def __init__(
         self,
-        image_size=32,
+        image_size: Tuple[int, int] = (32, 32),  # 修改这里，指定默认值为一个元组
         in_channels=3,
         model_channels=128,
         out_channels=3,
@@ -183,14 +184,14 @@ class UNet(nn.Module):
         self.down_blocks = nn.ModuleList()
         ch = model_channels
         input_block_channels = [ch]
-        resolution = image_size
+        resolution = list(image_size)
         
         for level, mult in enumerate(channel_mult):
             out_ch = model_channels * mult
             for _ in range(num_res_blocks):
                 layers = [ResidualBlock(ch, out_ch, time_emb_dim, num_classes, dropout)]
                 ch = out_ch
-                if use_attention and resolution in attention_resolutions:
+                if use_attention and (resolution[0] in attention_resolutions and resolution[1] in attention_resolutions):
                     layers.append(AttentionBlock(ch))
                 self.down_blocks.append(nn.ModuleList(layers))
                 input_block_channels.append(ch)
@@ -198,7 +199,8 @@ class UNet(nn.Module):
             if level != len(channel_mult) - 1:
                 self.down_blocks.append(nn.ModuleList([Downsample(ch)]))
                 input_block_channels.append(ch)
-                resolution //= 2
+                resolution[0] //= 2
+                resolution[1] //= 2
         
         # Middle
         self.middle_block = nn.ModuleList([
@@ -214,11 +216,12 @@ class UNet(nn.Module):
                 ich = input_block_channels.pop()
                 layers = [ResidualBlock(ch + ich, model_channels * mult, time_emb_dim, num_classes, dropout)]
                 ch = model_channels * mult
-                if use_attention and resolution in attention_resolutions:
+                if use_attention and (resolution[0] in attention_resolutions and resolution[1] in attention_resolutions):
                     layers.append(AttentionBlock(ch))
                 if level != len(channel_mult) - 1 and i == num_res_blocks:
                     layers.append(Upsample(ch))
-                    resolution *= 2
+                    resolution[0] *= 2
+                    resolution[1] *= 2
                 self.up_blocks.append(nn.ModuleList(layers))
         
         # Output

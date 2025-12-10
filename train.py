@@ -22,13 +22,22 @@ from models import UNet, DiT, DiM
 from diffusion import DDPM, DDIM
 from datasets import DiffusionDataset, CustomImageDataset
 from utils.trainer import DiffusionTrainer
-from utils.helpers import set_seed, setup_distributed, count_parameters, load_config
+from utils.helpers import set_seed, setup_distributed, count_parameters, load_config, resolve_image_size
 
 
 def get_model(config):
     """Create model based on config"""
     model_type = config['model_type'].lower()
     model_params = config['model_params'].copy()
+    # Ensure image size fields reflect normalized (H, W)
+    if model_type == 'unet':
+        model_params['image_size'] = config['image_size']
+    elif model_type == 'dit':
+        if 'img_size' in model_params:
+            model_params['img_size'] = config['image_size']
+    elif model_type == 'dim':
+        if 'img_size' in model_params:
+            model_params['img_size'] = config['image_size']
     
     # Add conditional info
     if config.get('conditional', False):
@@ -49,26 +58,15 @@ def get_model(config):
 
 
 def get_diffusion(config, device):
-    """Create diffusion process based on config"""
-    diffusion_type = config['diffusion_type'].lower()
-    
-    common_params = {
-        'num_timesteps': config['num_timesteps'],
-        'beta_start': config['beta_start'],
-        'beta_end': config['beta_end'],
-        'beta_schedule': config['beta_schedule'],
-        'device': device
-    }
-    
-    if diffusion_type == 'ddpm':
-        diffusion = DDPM(**common_params)
-    elif diffusion_type == 'ddim':
-        ddim_params = common_params.copy()
-        ddim_params['num_inference_steps'] = config.get('num_inference_steps', 50)
-        ddim_params['eta'] = config.get('ddim_eta', 0.0)
-        diffusion = DDIM(**ddim_params)
-    else:
-        raise ValueError(f"Unknown diffusion type: {diffusion_type}")
+    """Create DDPM diffusion process for training"""
+    # Training always uses DDPM for loss computation
+    diffusion = DDPM(
+        num_timesteps=config['num_timesteps'],
+        beta_start=config['beta_start'],
+        beta_end=config['beta_end'],
+        beta_schedule=config['beta_schedule'],
+        device=device
+    )
     
     return diffusion
 
@@ -76,11 +74,12 @@ def get_diffusion(config, device):
 def get_dataset(config, train=True):
     """Create dataset based on config"""
     dataset_name = config['dataset'].lower()
+    img_size = resolve_image_size(config['image_size'])
     
     if dataset_name == 'custom':
         # Custom dataset
         transform = CustomImageDataset.get_default_transform(
-            config['image_size'], 'rgb'
+            img_size, 'rgb'
         )
         dataset = CustomImageDataset(
             root=config['data_root'],
@@ -92,7 +91,7 @@ def get_dataset(config, train=True):
     else:
         # Torchvision dataset
         transform = DiffusionDataset.get_default_transform(
-            config['image_size'], dataset_name
+            img_size, dataset_name
         )
         dataset = DiffusionDataset(
             dataset_name=dataset_name,
@@ -184,13 +183,19 @@ def get_scheduler(config, optimizer):
     return scheduler
 
 
-def train_worker(rank, world_size, config):
+def train_worker(rank, world_size, config, gpu_ids):
     """Worker function for distributed training"""
+    # Setup GPU
+    if gpu_ids:
+        gpu_id = gpu_ids[rank] if isinstance(gpu_ids, list) else gpu_ids
+        torch.cuda.set_device(gpu_id)
+        device = torch.device(f'cuda:{gpu_id}')
+    else:
+        device = torch.device(f'cuda:{rank}')
+    
     # Setup distributed
     if world_size > 1:
         setup_distributed(rank, world_size)
-    
-    device = torch.device(f'cuda:{rank}')
     
     # Set seed
     set_seed(config['seed'] + rank)
@@ -236,28 +241,66 @@ def train_worker(rank, world_size, config):
 def main():
     parser = argparse.ArgumentParser(description='Train diffusion models')
     parser.add_argument('--config', type=str, required=True, help='Path to config file')
-    parser.add_argument('--gpus', type=int, default=1, help='Number of GPUs to use')
+    parser.add_argument('--gpus', type=str, default=None, help='GPU(s) to use. Single: "0" or "1", Multiple: "0,1,2,3"')
     parser.add_argument('--port', type=str, default='12355', help='Port for distributed training')
     args = parser.parse_args()
     
     # Load config (YAML/JSON)
     config = load_config(Path(args.config))
+    # Normalize image_size to (H, W)
+    config['image_size'] = resolve_image_size(config['image_size'])
     
-    # Override distributed settings
-    world_size = args.gpus
+    # Determine GPU(s) to use
+    if args.gpus:
+        # Parse command line GPU specification
+        if ',' in args.gpus:
+            # Multiple GPUs: "0,1,2,3"
+            gpu_ids = [int(x.strip()) for x in args.gpus.split(',')]
+            world_size = len(gpu_ids)
+        else:
+            # Single GPU: "0" or "1"
+            gpu_ids = int(args.gpus.strip())
+            world_size = 1
+    else:
+        # Use config file GPU settings
+        gpu_id_config = config.get('gpu_id', 0)
+        if isinstance(gpu_id_config, list):
+            # Config specifies multiple GPUs: [0, 1, 2, 3]
+            gpu_ids = gpu_id_config
+            world_size = len(gpu_ids)
+        else:
+            # Config specifies single GPU: 0 or 1
+            gpu_ids = gpu_id_config
+            world_size = 1
+    
+    # Validate GPU availability
+    if torch.cuda.is_available():
+        num_gpus = torch.cuda.device_count()
+        if isinstance(gpu_ids, list):
+            for gid in gpu_ids:
+                if gid >= num_gpus:
+                    raise ValueError(f"GPU {gid} not available. Only {num_gpus} GPU(s) detected.")
+        else:
+            if gpu_ids >= num_gpus:
+                raise ValueError(f"GPU {gpu_ids} not available. Only {num_gpus} GPU(s) detected.")
+    else:
+        raise RuntimeError("CUDA not available. GPU training requires CUDA.")
+    
+    # Update config with actual settings
     config['world_size'] = world_size
     config['distributed'] = world_size > 1
+    config['gpu_ids'] = gpu_ids
     
     # Set port
     os.environ['MASTER_PORT'] = args.port
     
     # Launch training
     if world_size > 1:
-        print(f"Starting distributed training with {world_size} GPUs...")
-        mp.spawn(train_worker, args=(world_size, config), nprocs=world_size, join=True)
+        print(f"Starting distributed training with {world_size} GPUs: {gpu_ids}")
+        mp.spawn(train_worker, args=(world_size, config, gpu_ids), nprocs=world_size, join=True)
     else:
-        print("Starting single GPU training...")
-        train_worker(0, 1, config)
+        print(f"Starting single GPU training on GPU {gpu_ids if isinstance(gpu_ids, int) else gpu_ids[0]}...")
+        train_worker(0, 1, config, gpu_ids)
 
 
 if __name__ == '__main__':

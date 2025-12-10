@@ -14,6 +14,8 @@ import swanlab
 from torchvision.utils import save_image
 import time
 
+from utils.helpers import resolve_image_size
+
 
 class DiffusionTrainer:
     """
@@ -52,7 +54,9 @@ class DiffusionTrainer:
         # Model
         self.model = model.to(device)
         if self.is_distributed:
-            self.model = DDP(model, device_ids=[rank])
+            # DDP will automatically use the device set by torch.cuda.set_device()
+            # Do not specify device_ids to avoid GPU mapping issues
+            self.model = DDP(model)
         
         self.diffusion = diffusion
         self.train_loader = train_loader
@@ -75,8 +79,10 @@ class DiffusionTrainer:
         self.use_swanlab = self.config.get('use_swanlab', True)
         self.conditional = self.config.get('conditional', False)
         self.num_classes = self.config.get('num_classes', None)
-        self.image_size = self.config.get('image_size', 32)
+        self.image_size = resolve_image_size(self.config.get('image_size', 32))
         self.in_channels = self.config.get('in_channels', 3)
+        self.model_type = self.config.get('model_type', 'unet').lower()
+        self.model_params = self.config.get('model_params', {}).copy()
         
         # Create directories
         if self.is_main_process:
@@ -120,13 +126,16 @@ class DiffusionTrainer:
         return ema_model
     
     def _get_model_params(self):
-        """Get model initialization parameters"""
-        # This is a simplified version, you may need to adjust based on your models
-        return {
-            'image_size': self.image_size,
-            'in_channels': self.in_channels,
-            'num_classes': self.num_classes if self.conditional else None
-        }
+        """Get model initialization parameters based on model type"""
+        params = self.model_params.copy()
+        
+        # Add conditional info
+        if self.conditional:
+            params['num_classes'] = self.num_classes
+        else:
+            params['num_classes'] = None
+        
+        return params
     
     def _update_ema(self):
         """Update EMA model"""
@@ -227,12 +236,14 @@ class DiffusionTrainer:
         
         model = self.ema_model if self.ema_model is not None else self.model
         if self.is_distributed:
-            model = model.module
+            # EMA model is not wrapped in DDP; only unwrap when attribute exists
+            model = model.module if hasattr(model, 'module') else model
         
         model.eval()
         
         # Generate samples
-        shape = (num_samples, self.in_channels, self.image_size, self.image_size)
+        h, w = self.image_size
+        shape = (num_samples, self.in_channels, h, w)
         
         if self.conditional and self.num_classes:
             # Sample from each class

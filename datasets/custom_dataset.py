@@ -4,6 +4,7 @@ Custom dataset for user-provided images
 
 from pathlib import Path
 import torch
+from torchvision import datasets, transforms
 from torch.utils.data import Dataset
 from PIL import Image
 from typing import Optional, Callable, List
@@ -65,9 +66,15 @@ class CustomImageDataset(Dataset):
         self.labels = []
         self.class_to_idx = {}
         
-        if conditional and use_subdirs:
+        # if conditional and use_subdirs:
+        #     self._load_with_subdirs()
+        # elif conditional and label_file:
+        #     self._load_with_json(label_file)
+        # else:
+        #     self._load_images_only()
+        if use_subdirs:
             self._load_with_subdirs()
-        elif conditional and label_file:
+        elif label_file:
             self._load_with_json(label_file)
         else:
             self._load_images_only()
@@ -131,3 +138,15 @@ class CustomImageDataset(Dataset):
         if self.conditional:
             return len(self.class_to_idx)
         return 0
+    @staticmethod
+    def get_default_transform(image_size=32, dataset_type='rgb'):
+        """Get default transform for a dataset"""
+        dataset_type = dataset_type.lower()
+        define_transforms = transforms.Compose([
+            transforms.Resize(image_size),
+            transforms.CenterCrop(image_size),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        ])
+        return define_transforms

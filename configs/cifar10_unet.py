@@ -10,7 +10,7 @@ config = {
     # Model
     'model_type': 'unet',  # 'unet', 'dit', 'dim'
     'model_params': {
-        'image_size': 32,
+        'image_size': (32, 32),
         'in_channels': 3,
         'model_channels': 128,
         'out_channels': 3,
@@ -22,14 +22,17 @@ config = {
     },
     
     # Dataset
-    'dataset': 'cifar10',  # 'cifar10', 'cifar100', 'mnist', 'fashionmnist', 'celeba', 'custom'
-    'data_root': './data',
-    'image_size': 32,
-    'conditional': True,  # Whether to use labels
-    'num_classes': 10,
+    'dataset': 'custom',  # 'cifar10', 'cifar100', 'mnist', 'fashionmnist', 'celeba', 'custom'
+    'data_root': '/data3/wangchangmiao/shenxy/PublicDataset/oxfordFlowers/prepare_pic/test',
+    'image_size': (32, 32),
+    'conditional': False,  # Whether to use labels
+    'num_classes': 102,
+    'use_subdirs': True,  # For custom dataset
+    'label_file': None,    # For custom dataset
     
     # Diffusion
-    'diffusion_type': 'ddpm',  # 'ddpm' or 'ddim'
+    # Note: Training always uses DDPM for loss computation
+    # Sampling method is selected via --sampling_method argument in sample.py
     'num_timesteps': 1000,
     'beta_start': 0.0001,
     'beta_end': 0.02,
@@ -62,15 +65,17 @@ config = {
     # Sampling
     'sample_dir': './generated_images',
     'sample_interval': 5,
-    'sample_start_epoch': 20,
+    'sample_start_epoch': 5,
     'num_samples': 16,
     
     # Monitoring
-    'use_swanlab': True,
+    'use_swanlab': False,
     
-    # Distributed training
-    'distributed': False,
-    'world_size': 1,
+    # GPU settings
+    # Single GPU: specify GPU ID (e.g., 0, 1, 2, etc.)
+    # Multi-GPU: specify list of GPU IDs (e.g., [0, 1, 2, 3])
+    # Note: --gpus command line argument will override this setting
+    'gpu_id': 0,  # Single GPU ID, or list for multi-GPU
     
     # Random seed
     'seed': 42,

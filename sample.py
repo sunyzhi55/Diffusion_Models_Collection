@@ -13,7 +13,7 @@ sys.path.append(str(PROJECT_ROOT))
 
 from models import UNet, DiT, DiM
 from diffusion import DDPM, DDIM
-from utils.helpers import set_seed, load_config
+from utils.helpers import set_seed, load_config, resolve_image_size
 
 
 def get_model(config):
@@ -38,9 +38,9 @@ def get_model(config):
     return model
 
 
-def get_diffusion(config, device):
-    """Create diffusion process based on config"""
-    diffusion_type = config['diffusion_type'].lower()
+def get_diffusion(config, device, sampling_method='ddpm'):
+    """Create diffusion process for sampling"""
+    sampling_method = sampling_method.lower()
     
     common_params = {
         'num_timesteps': config['num_timesteps'],
@@ -50,15 +50,15 @@ def get_diffusion(config, device):
         'device': device
     }
     
-    if diffusion_type == 'ddpm':
+    if sampling_method == 'ddpm':
         diffusion = DDPM(**common_params)
-    elif diffusion_type == 'ddim':
+    elif sampling_method == 'ddim':
         ddim_params = common_params.copy()
         ddim_params['num_inference_steps'] = config.get('num_inference_steps', 50)
         ddim_params['eta'] = config.get('ddim_eta', 0.0)
         diffusion = DDIM(**ddim_params)
     else:
-        raise ValueError(f"Unknown diffusion type: {diffusion_type}")
+        raise ValueError(f"Unknown sampling method: {sampling_method}. Use 'ddpm' or 'ddim'")
     
     return diffusion
 
@@ -67,6 +67,8 @@ def main():
     parser = argparse.ArgumentParser(description='Sample from trained diffusion models')
     parser.add_argument('--checkpoint', type=str, required=True, help='Path to checkpoint')
     parser.add_argument('--config', type=str, default=None, help='Path to config file (if not in checkpoint)')
+    parser.add_argument('--sampling_method', type=str, default='ddpm', choices=['ddpm', 'ddim'], 
+                        help='Sampling method: ddpm (1000 steps) or ddim (50 steps, faster)')
     parser.add_argument('--num_samples', type=int, default=64, help='Number of samples to generate')
     parser.add_argument('--batch_size', type=int, default=16, help='Batch size for sampling')
     parser.add_argument('--output_dir', type=str, default='./samples', help='Output directory')
@@ -95,6 +97,9 @@ def main():
         config = load_config(Path(args.config))
     else:
         config = checkpoint['config']
+
+    # Normalize image_size to (H, W)
+    config['image_size'] = resolve_image_size(config['image_size'])
     
     # Create model
     print("Creating model...")
@@ -110,8 +115,9 @@ def main():
     model = model.to(device)
     model.eval()
     
-    # Create diffusion
-    diffusion = get_diffusion(config, device)
+    # Create diffusion for sampling
+    print(f"Using sampling method: {args.sampling_method.upper()}")
+    diffusion = get_diffusion(config, device, sampling_method=args.sampling_method)
     
     # Prepare labels for conditional generation
     conditional = config.get('conditional', False)
@@ -143,8 +149,8 @@ def main():
         end = min(start + args.batch_size, args.num_samples)
         batch_size = end - start
         
-        shape = (batch_size, config['model_params']['in_channels'], 
-                config['image_size'], config['image_size'])
+        h, w = config['image_size']
+        shape = (batch_size, config['model_params']['in_channels'], h, w)
         
         batch_labels = labels[start:end] if labels is not None else None
         

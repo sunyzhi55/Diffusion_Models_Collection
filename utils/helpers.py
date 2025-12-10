@@ -7,7 +7,6 @@ import random
 import numpy as np
 import os
 from pathlib import Path
-import yaml
 
 
 def set_seed(seed=42):
@@ -18,6 +17,21 @@ def set_seed(seed=42):
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+
+def resolve_image_size(image_size):
+    """Normalize image_size to a (height, width) tuple.
+
+    Accepts int (square), list/tuple of length 2. Raises ValueError otherwise.
+    """
+    if isinstance(image_size, int):
+        return (image_size, image_size)
+    if isinstance(image_size, (list, tuple)) and len(image_size) == 2:
+        h, w = image_size
+        if not (isinstance(h, int) and isinstance(w, int)):
+            raise ValueError("image_size values must be integers")
+        return (h, w)
+    raise ValueError("image_size must be int or a pair (H, W)")
 
 
 def count_parameters(model):
@@ -33,26 +47,27 @@ def get_device(device_id=None):
 
 
 def save_config(config, save_path):
-    """Save configuration to file (YAML preferred, JSON fallback)"""
+    """Save configuration to JSON file"""
+    import json
     path = Path(save_path)
-    if path.suffix in {'.yml', '.yaml'}:
-        with path.open('w', encoding='utf-8') as f:
-            yaml.safe_dump(config, f, sort_keys=False, allow_unicode=True)
-    else:
-        import json
-        with path.open('w', encoding='utf-8') as f:
-            json.dump(config, f, indent=4)
+    with path.open('w', encoding='utf-8') as f:
+        json.dump(config, f, indent=4)
 
 
 def load_config(config_path):
-    """Load configuration from YAML or JSON file"""
+    """Load configuration from Python file"""
+    import sys
+    import importlib.util
+    
     path = Path(config_path)
-    if path.suffix in {'.yml', '.yaml'}:
-        with path.open('r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
-    import json
-    with path.open('r', encoding='utf-8') as f:
-        return json.load(f)
+    
+    # Load Python module dynamically
+    spec = importlib.util.spec_from_file_location("config", path)
+    config_module = importlib.util.module_from_spec(spec)
+    sys.modules["config"] = config_module
+    spec.loader.exec_module(config_module)
+    
+    return config_module.config
 
 
 def normalize_to_neg_one_to_one(img):
@@ -70,4 +85,6 @@ def setup_distributed(rank, world_size, backend='nccl'):
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12355'
     torch.distributed.init_process_group(backend, rank=rank, world_size=world_size)
-    torch.cuda.set_device(rank)
+    # Note: Do not call torch.cuda.set_device() here
+    # It should be called before this function in train_worker with the correct GPU ID
+

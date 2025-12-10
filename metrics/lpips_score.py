@@ -116,15 +116,15 @@ def calculate_all_metrics(real_images, fake_images, device='cuda'):
     print("\n=== Computing FID ===")
     fid_calculator = FIDScore(device=device)
     fid = fid_calculator.compute_fid(real_images, fake_images)
-    metrics['FID'] = fid
+    metrics['FID'] = float(fid)
     print(f"FID: {fid:.4f}")
     
     # IS
     print("\n=== Computing IS ===")
     is_calculator = InceptionScore(device=device)
     is_mean, is_std = is_calculator.compute_inception_score(fake_images)
-    metrics['IS_mean'] = is_mean
-    metrics['IS_std'] = is_std
+    metrics['IS_mean'] = float(is_mean)
+    metrics['IS_std'] = float(is_std)
     print(f"IS: {is_mean:.4f} ± {is_std:.4f}")
     
     # LPIPS
@@ -133,7 +133,7 @@ def calculate_all_metrics(real_images, fake_images, device='cuda'):
     
     # Diversity
     lpips_div = lpips_calculator.compute_lpips_diversity(fake_images)
-    metrics['LPIPS_diversity'] = lpips_div
+    metrics['LPIPS_diversity'] = float(lpips_div)
     print(f"LPIPS Diversity: {lpips_div:.4f}")
     
     return metrics

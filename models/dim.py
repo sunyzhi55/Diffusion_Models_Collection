@@ -6,6 +6,7 @@ Combining Mamba's efficient sequence modeling with diffusion models
 import torch
 import torch.nn as nn
 import math
+from typing import Tuple, Optional
 
 try:
     from mamba_ssm import Mamba
@@ -18,11 +19,13 @@ except ImportError:
 
 class PatchEmbed(nn.Module):
     """Image to Patch Embedding"""
-    def __init__(self, img_size=32, patch_size=2, in_channels=3, embed_dim=768):
+    def __init__(self, img_size: Tuple[int, int] = (32, 32), patch_size=2, in_channels=3, embed_dim=768):
         super().__init__()
         self.img_size = img_size
         self.patch_size = patch_size
-        self.num_patches = (img_size // patch_size) ** 2
+        self.h_tokens = img_size[0] // patch_size
+        self.w_tokens = img_size[1] // patch_size
+        self.num_patches = self.h_tokens * self.w_tokens
         self.proj = nn.Conv2d(in_channels, embed_dim, kernel_size=patch_size, stride=patch_size)
         
     def forward(self, x):
@@ -207,7 +210,7 @@ class DiM(nn.Module):
     """
     def __init__(
         self,
-        img_size=32,
+        img_size: Tuple[int, int] = (32, 32),
         patch_size=2,
         in_channels=3,
         hidden_size=768,
@@ -228,6 +231,8 @@ class DiM(nn.Module):
         # Patch embedding
         self.x_embedder = PatchEmbed(img_size, patch_size, in_channels, hidden_size)
         num_patches = self.x_embedder.num_patches
+        self.h_tokens = self.x_embedder.h_tokens
+        self.w_tokens = self.x_embedder.w_tokens
         
         # Positional embedding
         self.pos_embed = nn.Parameter(torch.zeros(1, num_patches, hidden_size))
@@ -282,8 +287,8 @@ class DiM(nn.Module):
         imgs: (B, C, H, W)
         """
         p = self.patch_size
-        h = w = int(x.shape[1] ** 0.5)
-        assert h * w == x.shape[1]
+        h = self.h_tokens
+        w = self.w_tokens
         
         x = x.reshape(shape=(x.shape[0], h, w, p, p, self.out_channels))
         x = torch.einsum('nhwpqc->nchpwq', x)

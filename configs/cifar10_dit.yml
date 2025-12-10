@@ -15,7 +15,6 @@ data_root: "/data3/wangchangmiao/shenxy/PublicDataset/cifar10"
 image_size: 32
 conditional: true
 num_classes: 10
-diffusion_type: ddim
 num_timesteps: 1000
 beta_start: 0.0001
 beta_end: 0.02
@@ -44,3 +43,9 @@ use_swanlab: true
 distributed: false
 world_size: 1
 seed: 42
+
+# GPU设置
+# 单卡：指定具体的GPU ID (如 0, 1, 2, 等)
+# 多卡：指定GPU ID列表 (如 [0, 1, 2, 3])
+# 注意：--gpus 命令行参数会覆盖此配置
+gpu_id: 0  # 单卡GPU ID，或多卡时为GPU列表

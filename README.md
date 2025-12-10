@@ -6,7 +6,7 @@ A comprehensive PyTorch implementation of various diffusion models for image gen
 
 ---
 
-## <a id="english"></a>English
+## <a id="english">English</a>
 
 ### Features
 
@@ -82,27 +82,61 @@ pip install mamba-ssm
 
 #### 1. Training
 
-**Single GPU:**
+**Single GPU (指定具体GPU ID):**
 ```bash
-python train.py --config configs/cifar10_unet.yml --gpus 1
+# 使用 GPU 0
+python train.py --config configs/cifar10_unet.py --gpus 0
+
+# 使用 GPU 1
+python train.py --config configs/cifar10_unet.py --gpus 1
 ```
 
-**Multi-GPU (e.g., 4 GPUs):**
+**Multi-GPU (多卡并行训练):**
 ```bash
-python train.py --config configs/cifar10_unet.yml --gpus 4
+# 使用 GPU 0, 1, 2, 3 进行4卡分布式训练
+python train.py --config configs/cifar10_unet.py --gpus 0,1,2,3
+
+# 使用 GPU 0, 2, 3 进行3卡分布式训练
+python train.py --config configs/cifar10_unet.py --gpus 0,2,3
 ```
+
+**配置文件中指定GPU (可选):**
+在配置文件中添加或修改 `gpu_id`：
+```python
+config = {
+    # 单卡情况
+    'gpu_id': 0,
+    
+    # 或多卡情况
+    'gpu_id': [0, 1, 2, 3],
+    # ...
+}
+```
+命令行 `--gpus` 参数会覆盖配置文件中的设置。
 
 **Training with DiT:**
 ```bash
-python train.py --config configs/cifar10_dit.yml --gpus 1
+python train.py --config configs/cifar10_dit.py --gpus 0
 ```
 
 #### 2. Sampling
 
-**Generate samples from trained model:**
+**Generate samples using DDPM (1000 steps, high quality):**
 ```bash
 python sample.py \
     --checkpoint checkpoints/best_model.pth \
+    --sampling_method ddpm \
+    --num_samples 64 \
+    --batch_size 16 \
+    --output_dir ./samples \
+    --use_ema
+```
+
+**Generate samples using DDIM (50 steps, faster):**
+```bash
+python sample.py \
+    --checkpoint checkpoints/best_model.pth \
+    --sampling_method ddim \
     --num_samples 64 \
     --batch_size 16 \
     --output_dir ./samples \
@@ -113,6 +147,7 @@ python sample.py \
 ```bash
 python sample.py \
     --checkpoint checkpoints/best_model.pth \
+    --sampling_method ddim \
     --num_samples 64 \
     --cfg_scale 3.0 \
     --labels "0,1,2,3,4,5,6,7,8,9" \
@@ -133,19 +168,19 @@ python evaluate.py \
 
 ### Configuration
 
-Edit configuration files in `configs/` to customize:
+Configuration files are Python dictionaries in `configs/` directory. Edit them to customize:
 
 - Model architecture and parameters
 - Dataset selection
 - Training hyperparameters
 - Diffusion parameters
 - Sampling settings
+- GPU selection
 
 Example configuration structure:
 ```python
 config = {
     'model_type': 'unet',  # 'unet', 'dit', 'dim'
-    'diffusion_type': 'ddpm',  # 'ddpm', 'ddim'
     'dataset': 'cifar10',
     'conditional': True,
     'epochs': 200,
@@ -154,6 +189,8 @@ config = {
     # ... more options
 }
 ```
+
+**Note:** Training always uses DDPM for loss computation. Sampling method (DDPM or DDIM) is selected via `--sampling_method` argument when running `sample.py`.
 
 ### Custom Dataset
 
@@ -190,7 +227,7 @@ config = {
 
 ---
 
-## <a id="chinese"></a>中文
+## <a id="chinese">中文</a>
 
 ### 功能特性
 
@@ -235,27 +272,61 @@ pip install mamba-ssm
 
 #### 1. 训练
 
-**单卡训练:**
+**单卡训练 (指定具体GPU ID):**
 ```bash
-python train.py --config configs/cifar10_unet.yml --gpus 1
+# 使用 GPU 0
+python train.py --config configs/cifar10_unet.py --gpus 0
+
+# 使用 GPU 1
+python train.py --config configs/cifar10_unet.py --gpus 1
 ```
 
-**多卡训练（例如4卡）:**
+**多卡并行训练 (DDP):**
 ```bash
-python train.py --config configs/cifar10_unet.yml --gpus 4
+# 使用 GPU 0, 1, 2, 3 进行4卡分布式训练
+python train.py --config configs/cifar10_unet.py --gpus 0,1,2,3
+
+# 使用 GPU 0, 2, 3 进行3卡分布式训练
+python train.py --config configs/cifar10_unet.py --gpus 0,2,3
 ```
 
-**使用DiT训练:**
+**通过配置文件指定GPU (可选):**
+在配置文件中修改 `gpu_id`：
+```python
+config = {
+    # 单卡情况
+    'gpu_id': 0,
+    
+    # 或多卡情况
+    'gpu_id': [0, 1, 2, 3],
+    # ...
+}
+```
+命令行参数 `--gpus` 会覆盖配置文件中的设置。
+
+**使用DiT进行训练:**
 ```bash
-python train.py --config configs/cifar10_dit.yml --gpus 1
+python train.py --config configs/cifar10_dit.py --gpus 0
 ```
 
 #### 2. 采样生成
 
-**从训练好的模型生成样本:**
+**使用DDPM采样（1000步，高质量）:**
 ```bash
 python sample.py \
     --checkpoint checkpoints/best_model.pth \
+    --sampling_method ddpm \
+    --num_samples 64 \
+    --batch_size 16 \
+    --output_dir ./samples \
+    --use_ema
+```
+
+**使用DDIM采样（50步，快速）:**
+```bash
+python sample.py \
+    --checkpoint checkpoints/best_model.pth \
+    --sampling_method ddim \
     --num_samples 64 \
     --batch_size 16 \
     --output_dir ./samples \
@@ -266,6 +337,7 @@ python sample.py \
 ```bash
 python sample.py \
     --checkpoint checkpoints/best_model.pth \
+    --sampling_method ddim \
     --num_samples 64 \
     --cfg_scale 3.0 \
     --labels "0,1,2,3,4,5,6,7,8,9" \
@@ -286,19 +358,19 @@ python evaluate.py \
 
 ### 配置说明
 
-在 `configs/` 目录下编辑配置文件以自定义：
+配置文件位于 `configs/` 目录，使用 Python 字典格式。可以自定义：
 
 - 模型架构和参数
 - 数据集选择
 - 训练超参数
 - 扩散过程参数
 - 采样设置
+- GPU选择
 
 配置文件示例：
 ```python
 config = {
     'model_type': 'unet',  # 'unet', 'dit', 'dim'
-    'diffusion_type': 'ddpm',  # 'ddpm', 'ddim'
     'dataset': 'cifar10',
     'conditional': True,
     'epochs': 200,
@@ -307,6 +379,8 @@ config = {
     # ... 更多选项
 }
 ```
+
+**说明：** 训练时统一使用DDPM计算损失函数。采样方式（DDPM或DDIM）通过运行`sample.py`时的`--sampling_method`参数选择。
 
 ### 自定义数据集
 

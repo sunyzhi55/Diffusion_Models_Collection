@@ -136,6 +136,8 @@ class DDIM:
     def _extract(self, a, t, x_shape):
         """Extract coefficients at specified timesteps"""
         batch_size = t.shape[0]
+        # Ensure 'a' is on the same device as 't' for multi-GPU training
+        a = a.to(t.device)
         out = a.gather(-1, t)
         return out.reshape(batch_size, *((1,) * (len(x_shape) - 1)))
     

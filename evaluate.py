@@ -8,6 +8,8 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from torchvision.utils import save_image
+import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.append(str(PROJECT_ROOT))
@@ -16,7 +18,7 @@ from models import UNet, DiT, DiM
 from diffusion import DDPM, DDIM
 from datasets import DiffusionDataset, CustomImageDataset
 from metrics.lpips_score import calculate_all_metrics
-from utils.helpers import set_seed, load_config
+from utils.helpers import set_seed, load_config, resolve_image_size
 
 
 def get_model(config):
@@ -42,46 +44,40 @@ def get_model(config):
 
 
 def get_diffusion(config, device):
-    """Create diffusion process based on config"""
-    diffusion_type = config['diffusion_type'].lower()
-    
-    common_params = {
-        'num_timesteps': config['num_timesteps'],
-        'beta_start': config['beta_start'],
-        'beta_end': config['beta_end'],
-        'beta_schedule': config['beta_schedule'],
-        'device': device
-    }
-    
-    if diffusion_type == 'ddpm':
-        diffusion = DDPM(**common_params)
-    elif diffusion_type == 'ddim':
-        ddim_params = common_params.copy()
-        ddim_params['num_inference_steps'] = config.get('num_inference_steps', 50)
-        ddim_params['eta'] = config.get('ddim_eta', 0.0)
-        diffusion = DDIM(**ddim_params)
-    else:
-        raise ValueError(f"Unknown diffusion type: {diffusion_type}")
+    """Create DDPM diffusion process for evaluation"""
+    # Evaluation always uses DDPM for consistency with training
+    diffusion = DDPM(
+        num_timesteps=config['num_timesteps'],
+        beta_start=config['beta_start'],
+        beta_end=config['beta_end'],
+        beta_schedule=config['beta_schedule'],
+        device=device
+    )
     
     return diffusion
 
 
-def get_dataset(config, train=False):
+def get_dataset(config, train=True):
     """Create dataset based on config"""
     dataset_name = config['dataset'].lower()
+    img_size = resolve_image_size(config['image_size'])
     
     if dataset_name == 'custom':
+        # Custom dataset
         transform = CustomImageDataset.get_default_transform(
-            config['image_size'], 'rgb'
+            img_size, 'rgb'
         )
         dataset = CustomImageDataset(
             root=config['data_root'],
             transform=transform,
-            conditional=False  # Don't need labels for evaluation
+            conditional=config.get('conditional', False),
+            label_file=config.get('label_file'),
+            use_subdirs=config.get('use_subdirs', False)
         )
     else:
+        # Torchvision dataset
         transform = DiffusionDataset.get_default_transform(
-            config['image_size'], dataset_name
+            img_size, dataset_name
         )
         dataset = DiffusionDataset(
             dataset_name=dataset_name,
@@ -89,7 +85,7 @@ def get_dataset(config, train=False):
             train=train,
             transform=transform,
             download=True,
-            conditional=False
+            conditional=config.get('conditional', False)
         )
     
     return dataset
@@ -103,6 +99,7 @@ def main():
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size')
     parser.add_argument('--use_ema', action='store_true', help='Use EMA model')
     parser.add_argument('--output', type=str, default='./metrics_results.json', help='Output file for metrics')
+    parser.add_argument('--save_images_dir', type=str, default='./eval', help='Directory to save PNG images (real/generate subfolders)')
     parser.add_argument('--seed', type=int, default=42, help='Random seed')
     parser.add_argument('--device', type=str, default='cuda', help='Device to use')
     args = parser.parse_args()
@@ -124,6 +121,9 @@ def main():
         config = load_config(Path(args.config))
     else:
         config = checkpoint['config']
+
+    # Normalize image_size to (H, W)
+    config['image_size'] = resolve_image_size(config['image_size'])
     
     # Create model
     print("Creating model...")
@@ -174,8 +174,8 @@ def main():
         end = min(start + args.batch_size, args.num_samples)
         batch_size = end - start
         
-        shape = (batch_size, config['model_params']['in_channels'],
-                config['image_size'], config['image_size'])
+        h, w = config['image_size']
+        shape = (batch_size, config['model_params']['in_channels'], h, w)
         
         print(f"Generating batch {i+1}/{num_batches}...")
         samples = diffusion.sample(model, shape)
@@ -186,6 +186,34 @@ def main():
     
     fake_images = torch.cat(fake_images, dim=0)[:args.num_samples]
     print(f"Generated {len(fake_images)} fake images")
+
+    # Optionally save all images as PNGs in a single root folder
+    if args.save_images_dir:
+        save_root = Path(args.save_images_dir)
+        # real_dir = save_root / 'real'
+        # gen_dir = save_root / 'generate'
+        save_root.mkdir(parents=True, exist_ok=True)
+        # gen_dir.mkdir(parents=True, exist_ok=True)
+
+        num_digits = len(str(max(len(real_images), len(fake_images), 1)))
+
+        for idx, img in enumerate(tqdm(real_images, desc='Saving real images')):
+            save_image(img, save_root / f"real_{idx + 1:0{num_digits}d}.png")
+
+        for idx, img in enumerate(tqdm(fake_images, desc='Saving generated images')):
+            save_image(img, save_root / f"generate_{idx + 1:0{num_digits}d}.png")
+
+        if len(real_images) > 0:
+            grid_real = real_images[:64]
+            nrow_real = max(1, int(len(grid_real) ** 0.5))
+            save_image(grid_real, save_root / 'real_grid.png', nrow=nrow_real)
+
+        if len(fake_images) > 0:
+            grid_fake = fake_images[:64]
+            nrow_fake = max(1, int(len(grid_fake) ** 0.5))
+            save_image(grid_fake, save_root / 'generate_grid.png', nrow=nrow_fake)
+
+        print(f"Saved real images and generated images to {save_root}")
     
     # Compute metrics
     print("\n" + "="*50)
@@ -203,9 +231,19 @@ def main():
     
     # Save to file
     output_path = Path(args.output)
+    
+    def _to_serializable(obj):
+        if isinstance(obj, torch.Tensor):
+            return obj.item()
+        if isinstance(obj, np.generic):
+            return obj.item()
+        return obj
+
+    metrics_serializable = {k: _to_serializable(v) for k, v in metrics.items()}
+
     with output_path.open('w', encoding='utf-8') as f:
         import json
-        json.dump(metrics, f, indent=4)
+        json.dump(metrics_serializable, f, indent=4)
     
     print(f"\nResults saved to {args.output}")
 
