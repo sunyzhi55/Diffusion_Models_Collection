@@ -392,6 +392,31 @@ config = {
 
 ---
 
+
+## 🌸 Oxford Flowers 数据集采样展示
+
+本项目支持对 **Oxford Flowers 102** 数据集进行训练与采样。以下展示了模型在该数据集上的生成效果示例。
+
+### 📷 采样图像 (PNG)
+
+(左: ddpm 采样结果 | 右: ddim 采样结果)
+
+<div align="center" style="display: flex; justify-content: center; gap: 20px;">
+  <img src="./assets/samples_01.png" width="260" />
+  <img src="./assets/samples_02.png" width="260" />
+</div>
+
+
+### 🎞️ 去噪过程 GIF 动画
+
+ddim 采样过程。GIF 动画展示了模型从纯噪声逐步生成清晰图像的过程。
+
+<div align="center">
+  <img src="./assets/samples_ddim.gif" width="360" />
+</div>
+
+---
+
 ## 📜 许可证
 
 本项目采用 MIT 许可证。详情请参阅 [LICENSE](LICENSE) 文件。

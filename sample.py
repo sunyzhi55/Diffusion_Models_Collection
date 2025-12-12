@@ -102,6 +102,10 @@ def main():
     else:
         config = checkpoint['config']
 
+    # num_inference_steps override
+    if args.sampling_method.lower() == 'ddim' and args.num_inference_steps:
+        config['num_inference_steps'] = args.num_inference_steps
+    
     # Normalize image_size to (H, W)
     config['image_size'] = resolve_image_size(config['image_size'])
     
