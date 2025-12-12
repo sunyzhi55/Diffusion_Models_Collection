@@ -208,6 +208,29 @@ python sample.py \
     --use_ema
 ```
 
+**Generate GIF and Save Intermediate Steps:**
+```bash
+# Generate GIF animation
+python sample.py \
+    --checkpoint checkpoints/best_model.pth \
+    --create_gif \
+    --output_dir ./results
+
+# Generate GIF and save intermediate frames
+python sample.py \
+    --checkpoint checkpoints/best_model.pth \
+    --create_gif \
+    --save_intermediate \
+    --output_dir ./results
+
+# Accelerated sampling with DDIM and generate GIF (Recommended)
+python sample.py \
+    --checkpoint checkpoints/best_model.pth \
+    --sampling_method ddim \
+    --num_inference_steps 50 \
+    --create_gif
+```
+
 ### 3. Evaluation
 
 Calculate FID, IS, and LPIPS metrics.

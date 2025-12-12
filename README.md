@@ -264,6 +264,29 @@ python sample.py \
     --use_ema
 ```
 
+**生成 GIF 动画与保存中间过程:**
+```bash
+# 生成 GIF 动画
+python sample.py \
+    --checkpoint checkpoints/best_model.pth \
+    --create_gif \
+    --output_dir ./results
+
+# 生成 GIF 并保存中间帧
+python sample.py \
+    --checkpoint checkpoints/best_model.pth \
+    --create_gif \
+    --save_intermediate \
+    --output_dir ./results
+
+# 使用 DDIM 加速采样并生成 GIF (推荐)
+python sample.py \
+    --checkpoint checkpoints/best_model.pth \
+    --sampling_method ddim \
+    --num_inference_steps 50 \
+    --create_gif
+```
+
 ### 3. 评估 (Evaluation)
 
 计算 FID, IS, 和 LPIPS 指标。

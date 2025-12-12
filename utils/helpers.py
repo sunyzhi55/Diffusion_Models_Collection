@@ -88,3 +88,46 @@ def setup_distributed(rank, world_size, backend='nccl', port='12355'):
     # Note: Do not call torch.cuda.set_device() here
     # It should be called before this function in train_worker with the correct GPU ID
 
+
+def create_gif(images_list, save_path, fps=20):
+    """
+    Create GIF from a list of images
+    
+    Args:
+        images_list: List of images (tensor or numpy array), each shape (C, H, W) or (H, W, C)
+                     Values should be in [0, 1] or [0, 255]
+        save_path: Path to save the GIF
+        fps: Frames per second
+    """
+    from PIL import Image
+    import numpy as np
+    
+    frames = []
+    for img in images_list:
+        if isinstance(img, torch.Tensor):
+            img = img.cpu().numpy()
+        
+        # Handle (C, H, W) format
+        if img.ndim == 3 and (img.shape[0] == 1 or img.shape[0] == 3):
+            img = np.transpose(img, (1, 2, 0))
+        
+        # Normalize to [0, 255]
+        if img.max() <= 1.0:
+            img = (img * 255).astype(np.uint8)
+        else:
+            img = img.astype(np.uint8)
+            
+        # Handle grayscale
+        if img.ndim == 3 and img.shape[2] == 1:
+            img = img.squeeze(2)
+            
+        frames.append(Image.fromarray(img))
+        
+    frames[0].save(
+        save_path,
+        save_all=True,
+        append_images=frames[1:],
+        duration=1000/fps,
+        loop=0
+    )
+
