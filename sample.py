@@ -131,16 +131,32 @@ def main():
     conditional = config.get('conditional', False)
     num_classes = config.get('num_classes')
     
-    if conditional and args.labels:
-        # Parse labels
-        labels = [int(x) for x in args.labels.split(',')]
-        if len(labels) < args.num_samples:
-            # Repeat labels
-            labels = (labels * ((args.num_samples // len(labels)) + 1))[:args.num_samples]
-        labels = torch.tensor(labels[:args.num_samples], device=device)
-    elif conditional and num_classes:
-        # Generate samples from each class
-        labels = torch.arange(args.num_samples, device=device) % num_classes
+    if conditional:
+        if args.labels:
+            # Parse user-provided labels (e.g., "0,1,2" or "3")
+            labels = [int(x.strip()) for x in args.labels.split(',')]
+            
+            # Validate labels are in valid range (optional but recommended)
+            if num_classes is not None:
+                for lbl in labels:
+                    if not (0 <= lbl < num_classes):
+                        raise ValueError(f"Label {lbl} is out of range [0, {num_classes})")
+            
+            # Repeat to fill num_samples
+            if len(labels) < args.num_samples:
+                labels = (labels * ((args.num_samples // len(labels)) + 1))[:args.num_samples]
+            else:
+                labels = labels[:args.num_samples]  # truncate if too many
+            
+            labels = torch.tensor(labels, dtype=torch.long, device=device)
+        
+        elif num_classes is not None:
+            # Default: randomly sample labels (allows repeats, works for any num_samples)
+            labels = torch.randint(0, num_classes, (args.num_samples,), device=device, dtype=torch.long)
+        
+        else:
+            raise ValueError("Conditional generation requires either --labels or known num_classes.")
+        print(f"Using conditional generation with labels: {labels.tolist()}")
     else:
         labels = None
     

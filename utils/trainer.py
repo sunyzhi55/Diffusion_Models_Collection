@@ -288,8 +288,15 @@ class DiffusionTrainer:
         shape = (num_samples, self.in_channels, h, w)
         
         if self.conditional and self.num_classes:
-            # Sample from each class
-            labels = torch.arange(min(num_samples, self.num_classes), device=self.device) % self.num_classes
+            if num_samples <= self.num_classes:
+                # Randomly sample without replacement
+                perm = torch.randperm(self.num_classes, device=self.device)
+                labels = perm[:num_samples]
+            else:
+                # Repeat as before
+                labels = torch.arange(self.num_classes, device=self.device).repeat(
+                    (num_samples + self.num_classes - 1) // self.num_classes)[:num_samples]
+            print(f"Sampling with labels: {labels.cpu().numpy()}")
         else:
             labels = None
         
