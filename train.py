@@ -195,7 +195,7 @@ def train_worker(rank, world_size, config, gpu_ids):
     
     # Setup distributed
     if world_size > 1:
-        setup_distributed(rank, world_size)
+        setup_distributed(rank, world_size, backend='nccl', port=config.get('port', '12355'))
     
     # Set seed
     set_seed(config['seed'] + rank)
@@ -228,7 +228,8 @@ def train_worker(rank, world_size, config, gpu_ids):
         device=device,
         config=config,
         rank=rank,
-        world_size=world_size
+        world_size=world_size,
+        resume_path=config.get('resume_path')
     )
     
     # Train
@@ -241,37 +242,23 @@ def train_worker(rank, world_size, config, gpu_ids):
 def main():
     parser = argparse.ArgumentParser(description='Train diffusion models')
     parser.add_argument('--config', type=str, required=True, help='Path to config file')
-    parser.add_argument('--gpus', type=str, default=None, help='GPU(s) to use. Single: "0" or "1", Multiple: "0,1,2,3"')
-    parser.add_argument('--port', type=str, default='12355', help='Port for distributed training')
     args = parser.parse_args()
     
     # Load config (YAML/JSON)
     config = load_config(Path(args.config))
     # Normalize image_size to (H, W)
     config['image_size'] = resolve_image_size(config['image_size'])
-    
-    # Determine GPU(s) to use
-    if args.gpus:
-        # Parse command line GPU specification
-        if ',' in args.gpus:
-            # Multiple GPUs: "0,1,2,3"
-            gpu_ids = [int(x.strip()) for x in args.gpus.split(',')]
-            world_size = len(gpu_ids)
-        else:
-            # Single GPU: "0" or "1"
-            gpu_ids = int(args.gpus.strip())
-            world_size = 1
+
+    # Use config file GPU settings
+    gpu_id_config = config.get('gpu_ids', 0)
+    if isinstance(gpu_id_config, list):
+        # Config specifies multiple GPUs: [0, 1, 2, 3]
+        gpu_ids = gpu_id_config
+        world_size = len(gpu_ids)
     else:
-        # Use config file GPU settings
-        gpu_id_config = config.get('gpu_id', 0)
-        if isinstance(gpu_id_config, list):
-            # Config specifies multiple GPUs: [0, 1, 2, 3]
-            gpu_ids = gpu_id_config
-            world_size = len(gpu_ids)
-        else:
-            # Config specifies single GPU: 0 or 1
-            gpu_ids = gpu_id_config
-            world_size = 1
+        # Config specifies single GPU: 0 or 1
+        gpu_ids = gpu_id_config
+        world_size = 1
     
     # Validate GPU availability
     if torch.cuda.is_available():
@@ -289,10 +276,9 @@ def main():
     # Update config with actual settings
     config['world_size'] = world_size
     config['distributed'] = world_size > 1
-    config['gpu_ids'] = gpu_ids
     
     # Set port
-    os.environ['MASTER_PORT'] = args.port
+    os.environ['MASTER_PORT'] = config.get('port', '12355')
     
     # Launch training
     if world_size > 1:

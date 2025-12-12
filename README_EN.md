@@ -114,20 +114,64 @@ DDPM_structure/
 
 The training script `train.py` supports both single-GPU and multi-GPU (DDP) configurations.
 
-**Single GPU:**
+1、**Single GPU:**
+
+Modify the ` gpu_ids' in the configuration file` to specify the GPU ID.
+
+```python
+config = {
+    # ...
+    'gpu_ids': [0],  # Specify single GPU ID
+    # ...
+}
+```
+
+Then run the training command:
+
 ```bash
 # Train UNet on CIFAR-10
-python train.py --config configs/cifar10_unet.py --gpus 0
+python train.py --config configs/cifar10_unet.py
 
 # Train DiT
-python train.py --config configs/cifar10_dit.py --gpus 0
+python train.py --config configs/cifar10_dit.py
 ```
 
-**Multi-GPU (DDP):**
+2、**Multi-GPU (DDP):**
+
+Modify the ` gpu_ids' in the configuration file` to specify multiple GPU IDs.
+
+```python
+config = {
+    # ...
+    'gpu_ids': [0, 1, 2, 3],  # Specify multiple GPU IDs
+    # ...
+}
+```
+
+Then run the training command:
+
 ```bash
 # Train on 4 GPUs
-python train.py --config configs/cifar10_unet.py --gpus 0,1,2,3
+python train.py --config configs/cifar10_unet.py
 ```
+
+3、**Resume Training:**
+
+Set `resume_path` in the configuration file to the checkpoint path:
+
+```python
+# configs/cifar10_unet.py
+config = {
+    # ...
+    'resume_path': 'checkpoints/cifar10-unet-ddpm/model_epoch_0050.pth',
+    # ...
+}
+```
+
+> **If the epoch count in the current configuration file is less than or equal to the number of epochs already trained, training will automatically extend to the new total number of epochs.**
+>
+> **If the epoch count in the current configuration file is greater than the number of epochs already trained, training will continue according to the epoch count in the configuration file.**
+Then run the training command as usual.
 
 ### 2. Sampling / Inference
 
@@ -189,6 +233,7 @@ config = {
     # Project Metadata
     'project_name': 'diffusion-models',
     'experiment_name': 'cifar10-unet',
+    'resume_path': None,    # Path to checkpoint for resuming training
 
     # Model Architecture
     'model_type': 'unet',   # Options: 'unet', 'dit', 'dim'

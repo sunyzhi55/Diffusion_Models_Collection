@@ -43,7 +43,8 @@ class DiffusionTrainer:
         device='cuda',
         config=None,
         rank=0,
-        world_size=1
+        world_size=1,
+        resume_path=None
     ):
         self.device = device
         self.rank = rank
@@ -97,6 +98,11 @@ class DiffusionTrainer:
         
         # Best loss tracking
         self.best_loss = float('inf')
+        self.start_epoch = 1
+        
+        # Resume from checkpoint
+        if resume_path:
+            self.load_checkpoint(resume_path)
         
         # Initialize SwanLab
         if self.use_swanlab and self.is_main_process:
@@ -106,6 +112,42 @@ class DiffusionTrainer:
                 config=self.config
             )
     
+    def load_checkpoint(self, checkpoint_path):
+        """Load checkpoint"""
+        print(f"Loading checkpoint from {checkpoint_path}...")
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        
+        # Load model state
+        if self.is_distributed:
+            self.model.module.load_state_dict(checkpoint['model_state_dict'])
+        else:
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+        
+        # Load optimizer state
+        if 'optimizer_state_dict' in checkpoint and self.optimizer:
+            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        
+        # Load scheduler state
+        if 'scheduler_state_dict' in checkpoint and self.scheduler:
+            self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        
+        # Load EMA model state
+        if 'ema_model_state_dict' in checkpoint and self.ema_model:
+            self.ema_model.load_state_dict(checkpoint['ema_model_state_dict'])
+        
+        # Load other info
+        self.start_epoch = checkpoint.get('epoch', 0) + 1
+        self.best_loss = checkpoint.get('best_loss', float('inf'))
+        
+        print(f"Resuming training from epoch {self.start_epoch}")
+        
+        # Check if we need to extend training
+        if self.start_epoch > self.epochs:
+            print(f"Checkpoint epoch ({self.start_epoch-1}) is greater than configured epochs ({self.epochs}).")
+            print(f"Extending training by {self.config.get('epochs', 100)} epochs...")
+            self.epochs = self.start_epoch + self.config.get('epochs', 100)
+            print(f"New target epochs: {self.epochs}")
+
     def _create_ema_model(self):
         """Create EMA model"""
         if self.is_distributed:
@@ -313,7 +355,7 @@ class DiffusionTrainer:
             print(f"Device: {self.device}")
             print(f"Distributed: {self.is_distributed} (World size: {self.world_size})")
         
-        for epoch in range(1, self.epochs + 1):
+        for epoch in range(self.start_epoch, self.epochs + 1):
             start_time = time.time()
             
             # Train one epoch

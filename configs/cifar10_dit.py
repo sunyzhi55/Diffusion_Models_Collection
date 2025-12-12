@@ -46,8 +46,9 @@ config = {
     'epochs': 2000,
     'batch_size': 16,
     'num_workers': 4,
+    'optimizer': 'adamw',
     'learning_rate': 1e-4,
-    'weight_decay': 0.0,
+    'weight_decay': 1e-4,
     'gradient_accumulation_steps': 1,
     'use_ema': True,
     'ema_decay': 0.9999,
@@ -60,11 +61,12 @@ config = {
     # Checkpointing
     'save_dir': './checkpoints',
     'save_interval': 10,
+    'resume_path': None, # Path to checkpoint to resume training from
     
     # Sampling
     'sample_dir': './generated_images',
-    'sample_interval': 5,
-    'sample_start_epoch': 10,
+    'sample_interval': 20,
+    'sample_start_epoch': 200,
     'num_samples': 16,
     
     # Monitoring
@@ -74,7 +76,8 @@ config = {
     # Single GPU: specify GPU ID (e.g., 0, 1, 2, etc.)
     # Multi-GPU: specify list of GPU IDs (e.g., [0, 1, 2, 3])
     # Note: --gpus command line argument will override this setting
-    'gpu_id': 0,  # Single GPU ID, or list for multi-GPU
+    'gpu_ids': [0],  # Single GPU ID, or list for multi-GPU
+    'port': '12355',  # Port for distributed training
     
     # Random seed
     'seed': 42,

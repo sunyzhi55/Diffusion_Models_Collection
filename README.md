@@ -169,20 +169,65 @@ DDPM_structure/
 
 `train.py` 脚本同时支持单卡和多卡 (DDP) 训练。
 
-**单 GPU 训练:**
+1、**单 GPU 训练:**
+
+修改配置文件中的 `gpu_ids`
+
+```python
+config = {
+    # ...
+    'gpu_ids': [0],  # 使用 GPU 0
+    # ...
+}
+```
+
+然后运行：
+
 ```bash
 # 在 CIFAR-10 上训练 UNet
-python train.py --config configs/cifar10_unet.py --gpus 0
+python train.py --config configs/cifar10_unet.py
 
 # 训练 DiT 模型
-python train.py --config configs/cifar10_dit.py --gpus 0
+python train.py --config configs/cifar10_dit.py
 ```
 
-**多 GPU 分布式训练 (DDP):**
+2、**多 GPU 分布式训练 (DDP):**
+
+修改配置文件中的 `gpu_ids`
+```python
+config = {
+    # ...
+    'gpu_ids': [0, 1, 2, 3],  # 使用 GPU 0,1,2,3
+    'port': '12355',  # 分布式训练端口
+    # ...
+}
+```
+
+然后运行：
+
 ```bash
 # 使用 4 张 GPU 进行训练
-python train.py --config configs/cifar10_unet.py --gpus 0,1,2,3
+python train.py --config configs/cifar10_unet.py
 ```
+
+3、**断点续训 (Resume Training):**
+
+在配置文件中设置 `resume_path` 为检查点路径，或者直接修改配置文件：
+
+```python
+# configs/cifar10_unet.py
+config = {
+    # ...
+    'resume_path': 'checkpoints/cifar10-unet-ddpm/model_epoch_0050.pth',
+    # ...
+}
+```
+
+> **如果当前配置文件中的epoch数小于等于已训练的epoch数，训练会自动延长至新的总epoch数。**
+>
+> **如果当前配置文件中的epoch数大于已训练的epoch数，那么按照配置文件中的epoch数继续训练。**
+
+然后正常运行训练命令即可。
 
 ### 2. 采样 / 推理 (Sampling)
 
@@ -244,6 +289,7 @@ config = {
     # 项目元数据
     'project_name': 'diffusion-models',
     'experiment_name': 'cifar10-unet',
+    'resume_path': None,    # 续训检查点路径
 
     # 模型架构
     'model_type': 'unet',   # 选项: 'unet', 'dit', 'dim'
@@ -336,4 +382,3 @@ config = {
 <div align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&color=0:A875FF,100:6FFBFF&height=240&section=header&text=✨%20Enjoy%20Building%20Your%20Model!%20✨&fontSize=44&animation=twinkling&fontAlignY=48&fontColor=3A1BFC" width="100%" alt="Header Banner" />
 </div>
-

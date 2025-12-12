@@ -80,10 +80,10 @@ def unnormalize_to_zero_to_one(img):
     return (img + 1) * 0.5
 
 
-def setup_distributed(rank, world_size, backend='nccl'):
+def setup_distributed(rank, world_size, backend='nccl', port='12355'):
     """Setup for distributed training"""
     os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12355'
+    os.environ['MASTER_PORT'] = port
     torch.distributed.init_process_group(backend, rank=rank, world_size=world_size)
     # Note: Do not call torch.cuda.set_device() here
     # It should be called before this function in train_worker with the correct GPU ID
