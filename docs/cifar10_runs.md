@@ -54,11 +54,10 @@ tags:
 - Batch size：512
 
 
-| 模型 / CFG | FID  $ \downarrow $  | IS  $ \uparrow $  | LPIPS_diversity  $ \uparrow $  | 耗时 |
+| 模型 | FID $\downarrow$ | IS $\uparrow$ | LPIPS_diversity $\uparrow$ | 耗时 |
 | --- | --- | --- | --- | --- |
 | 训练 20000 轮模型，MSE最低模型 | 13.541 | 7.148 (±0.173) | 0.2175 | 3.0h 47.0m 27.961907386779785s |
 | 训练18880轮模型 | 13.603 | 7.324 (±0.146) | 0.2224 | 3.0h 51.0m 26.17113709449768s |
-
 
 > 说明：训练时 MSE 最低不一定评估最佳，建议对多份存档评估后再选最终模型.
 
